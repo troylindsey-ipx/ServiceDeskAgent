@@ -1,9 +1,18 @@
-livekit-agents
+# LiveKit Agents Framework
+livekit-agents[openai]
 livekit-plugins-openai
 livekit-plugins-silero
-python-dotenv
 livekit-api
-flask[async]
+openai[realtime]
+azure-identity
+
+# Web Framework for Token Server
 flask
 flask-cors
-uvicorn
+
+# Environment Management
+python-dotenv
+
+# Optional: For enhanced audio processing (if needed)
+# numpy
+# sounddevice

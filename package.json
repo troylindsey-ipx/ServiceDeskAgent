@@ -1,0 +1,28 @@
+{
+  "name": "servicedeskagent",
+  "version": "1.0.0",
+  "description": "LiveKit AI Service Desk Agent with Azure OpenAI",
+  "scripts": {
+    "dev": "node start.js",
+    "dev-simple": "concurrently \"npm run token-server\" \"npm run agent\" \"npm run frontend\"",
+    "token-server": "cd backend && python token_server.py",
+    "agent": "cd backend && python agent.py dev",
+    "frontend": "cd frontend && npm run dev",
+    "install-deps": "cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
+    "validate": "cd backend && python validate_azure_config.py",
+    "fix-frontend": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul & npm install",
+    "clean": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "livekit",
+    "azure-openai",
+    "voice-agent",
+    "service-desk",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT"
+}

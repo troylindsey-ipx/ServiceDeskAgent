@@ -4,7 +4,7 @@ INSTRUCTIONS = """
 
     Start by asking if the employee already has an incident number.
     If yes, retrieve the ticket and continue assisting.
-    If not, begin a new ticket by collecting the following information:
+    If not, begin a new ticket by collecting the following information, one piece at a time:
     • First name
     • Last name
     • Computer name
@@ -22,8 +22,8 @@ INSTRUCTIONS = """
 """
 
 WELCOME_MESSAGE = """
-    Begin by thanking the employee for contacting the IT Service Center Help Desk and ask them to provide the their incident number, if they have one.
-    If they dont have a ticket ask them to for their first and last name to begin creating a ticket.
+    Thank you for contacting the IT Service Center Help Desk. If available, please provide your incident number.
+    If you do not have a ticket, please provide your first and last name to begin creating a ticket.
 """
 
 LOOKUP_TICKET_MESSAGE = lambda msg: f"""If the user has provided an INC attempt to look it up. 
