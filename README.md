@@ -40,14 +40,35 @@ npm run validate
 ```
 
 ### 5. Run the Application
+
+**Option 1: Full Service (Recommended)**
 ```bash
-# Start both frontend and backend simultaneously
-npm run dev
+# Start all services including transcriber
+npm run dev-full
+```
+
+**Option 2: Simple Service (Original)**
+```bash
+# Start without separate transcriber
+npm run dev-simple
+```
+
+**Option 3: Individual Services**
+```bash
+# Run transcriber and agent services helper
+npm run services
+
+# Or run individual services:
+npm run transcriber    # Speech-to-text service
+npm run agent-start    # Voice agent service
+npm run frontend       # React frontend
+npm run token-server   # LiveKit token server
 ```
 
 This will start:
 - **Token Server**: LiveKit token server on http://localhost:5001
-- **Voice Agent**: Python voice agent with Azure OpenAI
+- **Transcriber Service**: Dedicated speech-to-text processing
+- **Voice Agent**: Python voice agent with Azure OpenAI for responses
 - **Frontend**: React development server on http://localhost:5173
 
 ## Configuration
@@ -99,7 +120,33 @@ For comprehensive troubleshooting, see **[TROUBLESHOOTING.md](./TROUBLESHOOTING.
 
 ## Architecture
 
+### New Dual-Service Architecture
+
+The application now uses a **separation of concerns** approach for better reliability:
+
+- **Transcriber Service** (`backend/transcriber.py`): Dedicated speech-to-text processing
+  - Uses Azure OpenAI Whisper for transcription
+  - Uses default LiveKit audio processing (Windows compatible)
+  - Publishes transcriptions to LiveKit room
+  
+- **Agent Service** (`backend/agent.py`): Voice responses and function tools
+  - Uses Azure OpenAI realtime model for voice generation
+  - Handles ticket creation, lookup, and management functions
+  - Responds to transcribed text from the transcriber service
+
+### Technology Stack
+
 - **Backend**: Python with LiveKit Agents framework
 - **Frontend**: React with Vite
-- **AI Provider**: Azure OpenAI (GPT-4o Realtime)
+- **AI Provider**: Azure OpenAI (GPT-4o Realtime + Whisper)
 - **Voice Processing**: LiveKit real-time communication
+- **Audio Processing**: Default LiveKit audio processing (Windows compatible)
+
+### Why Separate Services?
+
+This architecture resolves previous issues with:
+- AsyncIO task creation errors
+- STT streaming compatibility problems
+- Complex realtime API configuration conflicts
+
+For detailed information about the transcriber service, see: **[backend/TRANSCRIBER_README.md](./backend/TRANSCRIBER_README.md)**

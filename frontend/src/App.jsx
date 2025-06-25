@@ -14,7 +14,6 @@ function App() {
       <header className="header">
         <div className="header-content">
           <div className="logo">
-            <span className="logo-icon">🖥️</span>
             <span className="logo-text">IT Service Center</span>
           </div>
           <nav className="nav">
@@ -38,7 +37,7 @@ function App() {
               <p>Get instant help by speaking naturally - no typing required!</p>
               
               <button className="primary-voice-button" onClick={handleSupportClick}>
-                🎤 Start Voice Chat Now
+                Speak to an Agent Now
               </button>
               
               <div className="demo-features">

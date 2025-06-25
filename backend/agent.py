@@ -33,7 +33,7 @@ async def entrypoint(ctx: JobContext):
     print(f"AGENT: Using deployment: {azure_deployment}")
     print(f"AGENT: Using API version: {azure_api_version}")
     
-    # Create Azure OpenAI realtime model
+    # Create Azure OpenAI realtime model (without transcription - handled by separate transcriber)
     model = openai.realtime.RealtimeModel.with_azure(
         azure_deployment=azure_deployment,
         azure_endpoint=azure_endpoint,
@@ -43,12 +43,31 @@ async def entrypoint(ctx: JobContext):
         temperature=0.8
     )
     
+    
+    print("AGENT: Connecting to room...")
+    
+    # Connect to the room and wait for participants
+    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_ALL)
+    
+    print(f"AGENT: Connected to room: {ctx.room.name}")
+    print("AGENT: Waiting for participants...")
+    
+    # Wait for participants to join
+    participant = await ctx.wait_for_participant()
+    
+    print(f"AGENT: Participant joined! Starting voice session in room: {ctx.room.name}")
+    print(f"AGENT: Participant name: {participant.name}, identity: {participant.identity}")
+    
+    # Get participant name for function tools
+    participant_name = participant.name or participant.identity or ""
+    
     print("AGENT: Creating function tools...")
     
-    # Create function context with tools
-    assistant_fnc = AssistantFnc()
+    # Create function context with tools (now with participant name)
+    assistant_fnc = AssistantFnc(participant_name)
     tools = [
         assistant_fnc.lookup_ticket,
+        assistant_fnc.search_tickets_by_name,
         assistant_fnc.get_ticket_details,
         assistant_fnc.create_ticket
     ]
@@ -61,27 +80,10 @@ async def entrypoint(ctx: JobContext):
         llm=model,
         tools=tools
     )
-    
-    print("AGENT: Connecting to room...")
-    
-    # Connect to the room and wait for participants
-    await ctx.connect(auto_subscribe=AutoSubscribe.SUBSCRIBE_ALL)
-    
-    print(f"AGENT: Connected to room: {ctx.room.name}")
-    print("AGENT: Waiting for participants...")
-    
-    # Wait for participants to join
-    await ctx.wait_for_participant()
-    
-    print(f"AGENT: Participant joined! Starting voice session in room: {ctx.room.name}")
-    
-    # Create voice session using AgentSession
+
+    # Create voice session using AgentSession (STT handled by separate transcriber service)
     session = voice.AgentSession(
-        llm=model,
-        stt = openai.STT.with_azure(
-            model="gpt-4o-transcribe",
-            api_version = azure_api_version
-        )
+        llm=model
     )
     
     print("AGENT: Voice session created, starting...")
@@ -94,11 +96,18 @@ async def entrypoint(ctx: JobContext):
     
     print("AGENT: Voice session started successfully!")
     
-    # Immediately greet the user with the specific welcome message
+    # Get participant name for personalized greeting
+    participant_name = participant.name or participant.identity or "there"
+    
+    # Check if we can find existing tickets for this user
+    print(f"AGENT: Checking for existing tickets for user: {participant_name}")
+    
+    # Immediately greet the user with personalized welcome message
     print("AGENT: Greeting the user...")
+    personalized_greeting = f"Hello {participant_name}! {WELCOME_MESSAGE.strip()}"
     session.generate_reply(
-        user_input="Please greet me with the standard IT help desk welcome message.",
-        instructions=f"Say exactly: {WELCOME_MESSAGE.strip()}"
+        user_input="Please greet the user with a personalized IT help desk welcome message.",
+        instructions=f"Say exactly: {personalized_greeting}"
     )
     
     # Keep the session running
