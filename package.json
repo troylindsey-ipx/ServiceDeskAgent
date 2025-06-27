@@ -1,0 +1,35 @@
+{
+  "name": "servicedeskagent",
+  "version": "1.0.0",
+  "description": "LiveKit AI Service Desk Agent with Azure OpenAI",
+  "scripts": {
+    "dev": "node start.js",
+    "dev-simple": "concurrently \"npm run token-server\" \"npm run agent\" \"npm run frontend\"",
+    "dev-full": "concurrently \"npm run token-server\" \"npm run transcriber\" \"npm run agent\" \"npm run frontend\"",
+    "token-server": "cd backend && python token_server.py",
+    "agent": "cd backend && python agent.py dev",
+    "transcriber": "cd backend && python transcriber.py start",
+    "agent-start": "cd backend && python agent.py start",
+    "services": "cd backend && python run_services.py",
+    "frontend": "cd frontend && npm run dev",
+    "install-deps": "cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
+    "validate": "cd backend && python validate_azure_config.py",
+    "fix-frontend": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul & npm install",
+    "clean": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul",
+    "token-usage": "cd backend && python view_token_usage.py --summary",
+    "token-usage-json": "cd backend && python view_token_usage.py --summary --json",
+    "token-session": "cd backend && python view_token_usage.py --session"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "livekit",
+    "azure-openai",
+    "voice-agent",
+    "service-desk",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT"
+}
