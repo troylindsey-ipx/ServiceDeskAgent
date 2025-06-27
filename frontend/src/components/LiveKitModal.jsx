@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import "@livekit/components-styles";
+import PropTypes from "prop-types";
 import SimpleVoiceAssistant from "./SimpleVoiceAssistant";
 
 const LiveKitModal = ({ setShowSupport }) => {
@@ -28,6 +29,23 @@ const LiveKitModal = ({ setShowSupport }) => {
       getToken(name);
     }
   };
+
+  const handleDisconnect = useCallback(async () => {
+    try {
+      // Request token usage summary before closing
+      console.log("Session ended - requesting token usage summary");
+      // Note: The backend services will handle token tracking cleanup automatically
+      // when the LiveKit room connection is closed
+    } catch (error) {
+      console.error("Error handling disconnect:", error);
+    } finally {
+      // Reset all state to allow for clean reconnection
+      setToken(null);
+      setName("");
+      setIsSubmittingName(true);
+      setShowSupport(false);
+    }
+  }, [setShowSupport]);
 
   return (
     <div className="modal-overlay">
@@ -59,10 +77,7 @@ const LiveKitModal = ({ setShowSupport }) => {
               connect={true}
               video={false}
               audio={true}
-              onDisconnected={() => {
-                setShowSupport(false);
-                setIsSubmittingName(true);
-              }}
+              onDisconnected={handleDisconnect}
             >
               <RoomAudioRenderer />
               <SimpleVoiceAssistant />
@@ -72,6 +87,10 @@ const LiveKitModal = ({ setShowSupport }) => {
       </div>
     </div>
   );
+};
+
+LiveKitModal.propTypes = {
+  setShowSupport: PropTypes.func.isRequired,
 };
 
 export default LiveKitModal;

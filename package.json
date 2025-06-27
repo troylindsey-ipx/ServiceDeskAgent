@@ -15,7 +15,10 @@
     "install-deps": "cd frontend && npm install && cd ../backend && pip install -r requirements.txt",
     "validate": "cd backend && python validate_azure_config.py",
     "fix-frontend": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul & npm install",
-    "clean": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul"
+    "clean": "cd frontend && rmdir /s /q node_modules 2>nul & del package-lock.json 2>nul",
+    "token-usage": "cd backend && python view_token_usage.py --summary",
+    "token-usage-json": "cd backend && python view_token_usage.py --summary --json",
+    "token-session": "cd backend && python view_token_usage.py --session"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

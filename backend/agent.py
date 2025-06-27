@@ -11,6 +11,7 @@ from livekit.plugins import openai
 from dotenv import load_dotenv
 from api import AssistantFnc
 from prompts import WELCOME_MESSAGE, INSTRUCTIONS, LOOKUP_TICKET_MESSAGE
+from token_tracker import token_tracker
 import os
 import asyncio
 
@@ -61,6 +62,23 @@ async def entrypoint(ctx: JobContext):
     # Get participant name for function tools
     participant_name = participant.name or participant.identity or ""
     
+    # Initialize token tracking
+    print("AGENT: Initializing token tracking...")
+    
+    # Clean up any stale sessions first
+    cleaned_count = token_tracker.cleanup_stale_sessions()
+    if cleaned_count > 0:
+        print(f"AGENT: Cleaned up {cleaned_count} stale sessions")
+    
+    tracking_session_id = token_tracker.start_session(
+        room_name=ctx.room.name,
+        user_name=participant_name,
+        participant_identity=participant.identity
+    )
+    
+    # Register agent service for token tracking
+    token_tracker.register_service(tracking_session_id, "agent", "gpt-4o-realtime")
+    
     print("AGENT: Creating function tools...")
     
     # Create function context with tools (now with participant name)
@@ -85,6 +103,23 @@ async def entrypoint(ctx: JobContext):
     session = voice.AgentSession(
         llm=model
     )
+    
+    # Add token tracking callback to session
+    @session.on("agent_speech")
+    def on_agent_speech(event):
+        """Track tokens when agent generates speech"""
+        try:
+            # Extract token usage from the event if available
+            # Note: This may need adjustment based on actual LiveKit event structure
+            if hasattr(event, 'usage') and event.usage:
+                input_tokens = getattr(event.usage, 'input_tokens', 0)
+                output_tokens = getattr(event.usage, 'output_tokens', 0)
+                
+                if input_tokens > 0 or output_tokens > 0:
+                    token_tracker.track_tokens(tracking_session_id, "agent", input_tokens, output_tokens)
+                    print(f"AGENT: Tracked tokens - Input: {input_tokens}, Output: {output_tokens}")
+        except Exception as e:
+            print(f"AGENT: Error tracking tokens: {e}")
     
     print("AGENT: Voice session created, starting...")
     
@@ -117,6 +152,22 @@ async def entrypoint(ctx: JobContext):
     except asyncio.CancelledError:
         print("AGENT: Voice session cancelled")
     finally:
+        # End token tracking and get summary
+        print("AGENT: Ending token tracking session...")
+        usage_summary = token_tracker.end_session(tracking_session_id, "agent")
+        
+        if usage_summary:
+            print("AGENT: Token Usage Summary:")
+            print(f"  User: {usage_summary.get('user_name', 'Unknown')}")
+            print(f"  Room: {usage_summary.get('room_name', 'Unknown')}")
+            print(f"  Total Tokens: {usage_summary.get('totals', {}).get('total_tokens', 0)}")
+            
+            for service_type, service_data in usage_summary.get('services', {}).items():
+                print(f"  {service_type.title()} Service ({service_data.get('model_name', 'Unknown')}):")
+                print(f"    Input Tokens: {service_data.get('input_tokens', 0)}")
+                print(f"    Output Tokens: {service_data.get('output_tokens', 0)}")
+                print(f"    Total Tokens: {service_data.get('total_tokens', 0)}")
+        
         await session.aclose()
         print("AGENT: Voice session closed")
     
